@@ -1,0 +1,9 @@
+const LCVENDAENUM = {
+    TABELA: 'LCVENDA',
+    LCVENID: 'LCVENID',
+    LCVENPRODUTOS: 'LCVENPRODUTOS',
+};
+
+Object.freeze(LCVENDAENUM);
+
+export default LCVENDAENUM;

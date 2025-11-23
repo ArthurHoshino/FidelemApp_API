@@ -1,0 +1,9 @@
+const CDEMPRESAENUM = {
+    TABELA: 'CDEMPRESA',
+    CDEMPID: 'CDEMPID',
+    CDEMPNOME: 'CDEMPNOME'
+};
+
+Object.freeze(CDEMPRESAENUM);
+
+export default CDEMPRESAENUM;

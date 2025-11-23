@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  # Serviço do Banco de Dados PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: fidelem_db
+    restart: always
+    env_file:
+      - ./.env # Carrega as variáveis do .env
+    ports:
+      - "5432:5432" # Expõe a porta do DB para o host (para debug)
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Serviço da API Node.js
+  api:
+    container_name: fidelem_api
+    build:
+      context: ./api # Pasta onde está o Dockerfile da API
+    restart: always
+    env_file:
+      - ./.env # Carrega as variáveis do .env
+    ports:
+      - "3000:3000" # Expõe a porta da API (Ex: 3000 no host -> 3000 no container)
+    volumes:
+      - ./api:/usr/src/app # Monta a pasta toda, incluindo as novas migrations
+    command: sh -c "npm run migrate up && npm run dev" # Comando para iniciar o servidor em modo de dev
+    depends_on:
+      - db # Garante que o serviço 'db' inicie antes da 'api'
+
+volumes:
+  # Define um volume nomeado para persistir os dados do Postgres
+  postgres_data:

@@ -1,0 +1,8 @@
+const CDACAOENUM = {
+    TABELA: 'CDACAO',
+    CDACAODESCRICAO: 'CDACAODESCRICAO'
+};
+
+Object.freeze(CDACAOENUM);
+
+export default CDACAOENUM;

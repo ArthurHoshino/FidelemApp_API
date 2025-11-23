@@ -1,0 +1,9 @@
+const CDCATEGORIAENUM = {
+    TABELA: 'CDCATEGORIA',
+    CDCATID: 'CDCATID',
+    CDCATNOME: 'CDCATNOME'
+};
+
+Object.freeze(CDCATEGORIAENUM);
+
+export default CDCATEGORIAENUM;
