@@ -1,7 +1,7 @@
 import { Router } from "express";
 import db from '../db/db.js';
 import CDEMPRESAENUM from '../core/enums/cdempresa.enum.js';
-import { getAllEntidades, getEntidadeById, getEntidadeByNomeDescricao } from '../core/utils.js';
+import { getAllEntidades, getEntidadeById, getEntidadeByNomeDescricao, montaUpdate, montaWhere } from '../core/utils.js';
 
 const router = Router();
 
@@ -9,49 +9,25 @@ const router = Router();
 // Rotas GET
 // <============================>
 router.get('/', async (req, res) => {
+    const data = req.query;
+
     try {
-        const { rows } = await getAllEntidades(CDEMPRESAENUM.TABELA, CDEMPRESAENUM.CDEMPID);
+        const colunas = [];
+        const parametros = [];
+
+        for (const [key, value] of Object.entries(data)) {
+            colunas.push(CDEMPRESAENUM[key.toUpperCase()]);
+            parametros.push(value);
+        }
+
+        const select = `SELECT * FROM "${CDEMPRESAENUM.TABELA}" ` + montaWhere(colunas);
+
+        const { rows } = await db.query(select, parametros);
+
         res.json(rows);
     } catch (err) {
         console.error(`[Buscar empresas]: ${err.message}\n`);
-        res.status(500).json({
-            error: err.message,
-            detalhes: err.cause ? err.cause : null
-        });
-    }
-});
-
-router.get('/cdempid', async (req, res) => {
-    const { empresa } = req.query;
-    try {
-        const { rows } = await getEntidadeById(CDEMPRESAENUM.TABELA, CDEMPRESAENUM.CDEMPID, empresa);
-
-        if (rows === undefined) {
-            return res.status(404).json({ error: 'Empresa não encontrada' });
-        }
-
-        res.json(rows[0]);
-    } catch (err) {
-        console.error(`[Buscar empresas - id]: ${err.message}\n`);
-        res.status(500).json({
-            error: err.message,
-            detalhes: err.cause ? err.cause : null
-        });
-    }
-});
-
-router.get('/cdempnome', async (req, res) => {
-    const { cdempnome } = req.query;
-    try {
-        const { rows } = await getEntidadeByNomeDescricao(CDEMPRESAENUM.TABELA, CDEMPRESAENUM.CDEMPNOME, cdempnome);
-
-        if (rows.length === 0) {
-            return res.status(404).json({ error: 'Empresa não encontrada' });
-        }
-
-        res.json(rows[0]);
-    } catch (err) {
-        console.error(`[Buscar empresas - nome]: ${err.message}\n`);
+        registraExcecao(err.stack, data['cdempid']);
         res.status(500).json({
             error: err.message,
             detalhes: err.cause ? err.cause : null
@@ -63,7 +39,7 @@ router.get('/cdempnome', async (req, res) => {
 // Rotas POST
 // <============================>
 router.post('/', async (req, res) => {
-    const { cdempnome } = req.body;
+    const { cdempid, cdempnome } = req.body;
 
     if (!cdempnome) {
         return res.status(400).json({ error: 'O  campo "empresa" é obrigatório' });
@@ -84,6 +60,7 @@ router.post('/', async (req, res) => {
         res.status(201).send();
     } catch (err) {
         console.error(`[Adicionar empresa]: ${err.message}\n`);
+        registraExcecao(err.stack, cdempid);
         res.status(500).json({
             error: err.message,
             detalhes: err.cause ? err.cause : null
@@ -108,16 +85,12 @@ router.put('/', async (req, res) => {
             return res.status(404).json({ error: 'Empresa não encontrada' });
         }
 
-        await db.query(
-            `UPDATE "CDEMPRESA"
-            SET "CDEMPNOME" = $1
-            WHERE "CDEMPID" = $2`,
-            [data['cdempnome'], data['cdempid']]
-        );
+        await db.query(`UPDATE "${CDEMPRESAENUM.TABELA}" SET "${CDEMPRESAENUM.CDEMPNOME}" = $1 WHERE "${CDEMPRESAENUM.CDEMPID}" = $2`, [data['cdempnome'], data['cdempid']]);
 
         res.status(204).send();
     } catch (err) {
         console.error(`[Atualizar empresa]: ${err.message}\n`);
+        registraExcecao(err.stack, data['cdempid']);
         res.status(500).json({
             error: err.message,
             detalhes: err.cause ? err.cause : null
@@ -150,6 +123,7 @@ router.delete('/', async (req, res) => {
         res.status(204).send();
     } catch (err) {
         console.error(`[Deletar empresa]: ${err.message}\n`);
+        registraExcecao(err.stack, cdempid);
         res.status(500).json({
             error: err.message,
             detalhes: err.cause ? err.cause : null

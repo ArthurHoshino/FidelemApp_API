@@ -4,6 +4,10 @@ import express from 'express';
 import cdEmpresaRoutes from './routes/cdempresa.routes.js';
 import cdCargoRoutes from './routes/cdcargo.routes.js';
 import cdSenhaRoutes from './routes/cdsenha.routes.js';
+import lcAuditoriaRoutes from './routes/lcauditoria.routes.js';
+import cdExcecaoRoutes from './routes/cdexcecao.routes.js';
+import cdProdutoRoutes from './routes/cdproduto.routes.js';
+import cdProdutoImagem from './routes/cdprodutoimagem.routes.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -18,6 +22,10 @@ app.get('/', (req, res) => {
 app.use('/cdempresa', cdEmpresaRoutes);
 app.use('/cdcargo', cdCargoRoutes);
 app.use('/cdsenha', cdSenhaRoutes);
+app.use('/lcauditoria', lcAuditoriaRoutes);
+app.use('/cdexcecao', cdExcecaoRoutes);
+app.use('/cdproduto', cdProdutoRoutes);
+app.use('/cdprodutoimagem', cdProdutoImagem);
 
 app.listen(port, () => {
     console.log(`Servidor rodando em http://localhost:${port}\n`);

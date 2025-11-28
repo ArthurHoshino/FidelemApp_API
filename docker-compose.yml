@@ -5,7 +5,7 @@ services:
   db:
     image: postgres:15-alpine
     container_name: fidelem_db
-    restart: always
+    restart: no
     env_file:
       - ./.env # Carrega as variáveis do .env
     ports:
@@ -18,7 +18,7 @@ services:
     container_name: fidelem_api
     build:
       context: ./api # Pasta onde está o Dockerfile da API
-    restart: always
+    restart: no
     env_file:
       - ./.env # Carrega as variáveis do .env
     ports:
