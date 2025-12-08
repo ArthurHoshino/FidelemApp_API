@@ -5,11 +5,6 @@ up:
 # Para os conteiners sem remove-los
 .PHONY: down
 down:
-	docker-compose stop
-
-# Para e remove conteiners, redes e volumes
-.PHONY: clean
-clean:
 	docker-compose down
 
 # Mostra os logs de todos os serviços (em tempo real)

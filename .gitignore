@@ -1,8 +1,12 @@
 # Dependências do Node
-/api/node_modules
+/api/node_modules/
 
 # Arquivo de variáveis de ambiente
 .env
 
 # Dados do Postgres (se montado localmente)
 postgres_data/
+
+# Configurações do VSCode
+.vscode/
+api/.vscode/
