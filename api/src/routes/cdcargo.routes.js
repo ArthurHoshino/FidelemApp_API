@@ -37,6 +37,9 @@ router.get('/', async (req, res) => {
             parametros.push(value);
         }
 
+        colunas.push(CDCARGOENUM.CDCAREMPRESAID);
+        parametros.push(data['cdcarempresaid']);
+
         const select = `SELECT "${CDCARGOENUM.TABELA}".* FROM "${CDCARGOENUM.TABELA}" JOIN "${CDEMPRESAENUM.TABELA}" ON "${CDEMPRESAENUM.CDEMPID}" = "${CDCARGOENUM.CDCAREMPRESAID}" ` + montaWhere(colunas);
         ({ rows } = await db.query(select, parametros))
 
