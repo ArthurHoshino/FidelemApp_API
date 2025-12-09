@@ -53,8 +53,7 @@ export const up = (pgm) => {
   // Inserir cada ação usando uma abordagem mais segura
   acoes.forEach((acao) => {
     pgm.sql(
-      `INSERT INTO "CDACAO" ("CDACAODESCRICAO") VALUES ($1)`,
-      [acao.descricao]
+      `INSERT INTO "CDACAO" ("CDACAODESCRICAO") VALUES ('${acao.descricao}')`
     );
   });
 };
