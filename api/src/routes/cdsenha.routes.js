@@ -3,7 +3,7 @@ import db from '../db/db.js';
 import CDCARGOENUM from "../core/enums/cdcargo.enum.js";
 import CDEMPRESAENUM from '../core/enums/cdempresa.enum.js';
 import CDSENHAENUM from '../core/enums/cdsenha.enum.js';
-import { montaInsert, montaUpdate, montaWhere, registraExcecao } from '../core/utils.js';
+import { montaInsert, montaUpdate, montaWhere, registraExcecao, registraAuditoria, getCodigoAcao } from '../core/utils.js';
 
 const router = Router();
 
@@ -33,6 +33,18 @@ router.get('/', async (req, res) => {
             JOIN "CDEMPRESA" ON "CDEMPID" = "CDCAREMPRESAID" ` + montaWhere(colunasCondicoes);
 
         const { rows } = await db.query(select, parametros);
+
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Buscar usuários');
+        if (acaoId && data['empresa']) {
+            await registraAuditoria(
+                `Busca de usuários realizada para empresa ${data['empresa']}`,
+                acaoId,
+                data['empresa'],
+                data['cdseid'] || null
+            );
+        }
+
         res.json(rows);
     } catch (err) {
         console.error(`[Buscar usuário]: ${err.message}\n`);
@@ -65,6 +77,17 @@ router.post('/', async (req, res) => {
         }
 
         await db.query(montaInsert(CDSENHAENUM), Object.values(data).slice(0, -1));
+
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Adicionar usuário');
+        if (acaoId && data['empresa']) {
+            await registraAuditoria(
+                `Usuário "${data['cdsenome']}" adicionado`,
+                acaoId,
+                data['empresa'],
+                null
+            );
+        }
 
         res.status(204).send();
     } catch (err) {
@@ -115,6 +138,17 @@ router.put('/', async (req, res) => {
             parametros
         );
 
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Atualizar usuário');
+        if (acaoId && data['empresa']) {
+            await registraAuditoria(
+                `Usuário ID ${data['cdseid']} atualizado`,
+                acaoId,
+                data['empresa'],
+                data['cdseid'] || null
+            );
+        }
+
         res.status(201).send();
     } catch (err) {
         console.error(`[Atualizar usuário]: ${err.message}\n`);
@@ -150,6 +184,17 @@ router.delete('/', async (req, res) => {
             `DELETE FROM "${CDSENHAENUM.TABELA}" WHERE "${CDSENHAENUM.CDSEID}" = $1`,
             [cdseid]
         );
+
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Deletar usuário');
+        if (acaoId && empresa) {
+            await registraAuditoria(
+                `Usuário ID ${cdseid} deletado`,
+                acaoId,
+                empresa,
+                null
+            );
+        }
 
         res.status(204).send();
     } catch (err) {

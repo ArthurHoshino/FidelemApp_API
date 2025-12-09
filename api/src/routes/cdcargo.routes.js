@@ -2,7 +2,7 @@ import { Router } from "express";
 import db from '../db/db.js';
 import CDCARGOENUM from "../core/enums/cdcargo.enum.js";
 import CDEMPRESAENUM from "../core/enums/cdempresa.enum.js";
-import { montaInsert, montaUpdate, montaWhere } from "../core/utils.js";
+import { montaInsert, montaUpdate, montaWhere, registraAuditoria, getCodigoAcao, registraExcecao } from "../core/utils.js";
 
 const router = Router();
 
@@ -40,6 +40,17 @@ router.get('/', async (req, res) => {
         const select = `SELECT "${CDCARGOENUM.TABELA}".* FROM "${CDCARGOENUM.TABELA}" JOIN "${CDEMPRESAENUM.TABELA}" ON "${CDEMPRESAENUM.CDEMPID}" = "${CDCARGOENUM.CDCAREMPRESAID}" ` + montaWhere(colunas);
         ({ rows } = await db.query(select, parametros))
 
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Buscar cargos');
+        if (acaoId && data['cdcarempresaid']) {
+            await registraAuditoria(
+                `Busca de cargos realizada para empresa ${data['cdcarempresaid']}`,
+                acaoId,
+                data['cdcarempresaid'],
+                data['cdseid'] || null
+            );
+        }
+
         res.json(rows);
     } catch (err) {
         console.error(`[Buscar cargos]: ${err.message}\n`);
@@ -72,6 +83,17 @@ router.post('/', async (req, res) => {
         }
 
         await db.query(montaInsert(CDCARGOENUM), Object.values(data));
+
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Adicionar cargo');
+        if (acaoId && data['cdcarempresaid']) {
+            await registraAuditoria(
+                `Cargo "${data['cdcarnome']}" adicionado`,
+                acaoId,
+                data['cdcarempresaid'],
+                data['cdseid'] || null
+            );
+        }
 
         res.status(201).send();
     } catch (err) {
@@ -119,6 +141,17 @@ router.put('/', async (req, res) => {
 
         await db.query(`UPDATE "${CDCARGOENUM.TABELA}" ` + montaUpdate(colunas), parametros);
 
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Atualizar cargo');
+        if (acaoId && data['cdcarempresaid']) {
+            await registraAuditoria(
+                `Cargo ID ${data['cdcarid']} atualizado`,
+                acaoId,
+                data['cdcarempresaid'],
+                data['cdseid'] || null
+            );
+        }
+
         res.status(204).send();
     } catch (err) {
         console.error(`[Atualizar cargo]: ${err.message}\n`);
@@ -151,6 +184,17 @@ router.delete('/', async (req, res) => {
         }
 
         await db.query(`DELETE FROM "${CDCARGOENUM.TABELA}" WHERE "${CDCARGOENUM.CDCARID}" = $1 AND "${CDCARGOENUM.CDCAREMPRESAID}" = $2`, Object.values(data));
+
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Deletar cargo');
+        if (acaoId && data['cdcarempresaid']) {
+            await registraAuditoria(
+                `Cargo ID ${data['cdcarid']} deletado`,
+                acaoId,
+                data['cdcarempresaid'],
+                data['cdseid'] || null
+            );
+        }
 
         res.status(204).send();
     } catch (err) {

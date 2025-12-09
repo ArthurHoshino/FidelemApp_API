@@ -4,6 +4,7 @@ import { DateTime } from 'luxon';
 // Enums
 import LCAUDITORIAENUM from '../core/enums/lcauditoria.enum.js';
 import CDEXCECAOENUM from '../core/enums/cdexcecao.enum.js';
+import CDACAOENUM from '../core/enums/cdacao.enum.js';
 
 /**
  * Query para buscar todas as entidades de uma tabela ordenadas pela coluna id
@@ -143,22 +144,47 @@ export function montaUpdate(colunas, retornaValores = false) {
 // <=========================================>
 
 /**
+ * Função para buscar o código de ação pela descrição
+ * 
+ * @param {String} descricao Descrição da ação
+ * @return {Integer|null} Código da ação ou null se não encontrado
+ */
+export async function getCodigoAcao(descricao) {
+    try {
+        const { rows } = await db.query(
+            `SELECT "${CDACAOENUM.CDACAOID}" FROM "${CDACAOENUM.TABELA}" WHERE "${CDACAOENUM.CDACAODESCRICAO}" = $1`,
+            [descricao]
+        );
+        
+        if (rows.length > 0) {
+            return rows[0][CDACAOENUM.CDACAOID];
+        }
+        
+        return null;
+    } catch (err) {
+        console.error(`[Buscar código de ação]: ${err.message}\n`);
+        return null;
+    }
+}
+
+/**
  * Função para registrar uma ação na LCAUDITORIA
  * 
  * @param {String} descricao Detalhamento da ação
  * @param {Integer} acao Código da ação
  * @param {Integer} empresa Código da empresa
+ * @param {Integer} usuario Código do usuário (opcional)
  * @return {boolean} Booleano indicando se a inserção deu certo ou não
  */
-export async function registraAuditoria(descricao, acao, empresa) {
+export async function registraAuditoria(descricao, acao, empresa, usuario = null) {
     try {
         const tempo = DateTime.now().setZone('America/Sao_Paulo').toFormat('yyyy-MM-dd HH:mm:ss');
         console.log(`Tempo: ${tempo}`);
 
         await db.query(
-            `INSERT INTO "${LCAUDITORIAENUM.TABELA}" ("${LCAUDITORIAENUM.LCAUDDESCRICAO}", "${LCAUDITORIAENUM.LCAUDDATA}", "${LCAUDITORIAENUM.LCAUDACAOID}", "${LCAUDITORIAENUM.LCAUDEMPRESAID}")
-            VALUES ($1, $2, $3, $4)`,
-            [descricao, tempo, acao, empresa]
+            `INSERT INTO "${LCAUDITORIAENUM.TABELA}" ("${LCAUDITORIAENUM.LCAUDDESCRICAO}", "${LCAUDITORIAENUM.LCAUDDATA}", "${LCAUDITORIAENUM.LCAUDACAOID}", "${LCAUDITORIAENUM.LCAUDEMPRESAID}", "${LCAUDITORIAENUM.LCAUDSENHAID}")
+            VALUES ($1, $2, $3, $4, $5)`,
+            [descricao, tempo, acao, empresa, usuario]
         );
 
         return true;

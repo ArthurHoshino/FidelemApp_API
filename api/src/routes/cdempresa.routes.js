@@ -1,7 +1,7 @@
 import { Router } from "express";
 import db from '../db/db.js';
 import CDEMPRESAENUM from '../core/enums/cdempresa.enum.js';
-import { getAllEntidades, getEntidadeById, getEntidadeByNomeDescricao, montaUpdate, montaWhere } from '../core/utils.js';
+import { getAllEntidades, getEntidadeById, getEntidadeByNomeDescricao, montaUpdate, montaWhere, registraAuditoria, getCodigoAcao, registraExcecao } from '../core/utils.js';
 
 const router = Router();
 
@@ -23,6 +23,17 @@ router.get('/', async (req, res) => {
         const select = `SELECT * FROM "${CDEMPRESAENUM.TABELA}" ` + montaWhere(colunas);
 
         const { rows } = await db.query(select, parametros);
+
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Buscar empresas');
+        if (acaoId && data['cdempid']) {
+            await registraAuditoria(
+                `Busca de empresas realizada`,
+                acaoId,
+                data['cdempid'],
+                data['cdseid'] || null
+            );
+        }
 
         res.json(rows);
     } catch (err) {
@@ -52,10 +63,21 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: 'Empresa já está cadastrada' });
         }
 
-        await db.query(
-            `INSERT INTO "CDEMPRESA" ("CDEMPNOME") VALUES ($1)`,
+        const { rows: insertedRows } = await db.query(
+            `INSERT INTO "CDEMPRESA" ("CDEMPNOME") VALUES ($1) RETURNING "CDEMPID"`,
             [cdempnome]
         );
+
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Adicionar empresa');
+        if (acaoId && insertedRows[0]?.CDEMPID) {
+            await registraAuditoria(
+                `Empresa "${cdempnome}" adicionada`,
+                acaoId,
+                insertedRows[0].CDEMPID,
+                null
+            );
+        }
 
         res.status(201).send();
     } catch (err) {
@@ -86,6 +108,17 @@ router.put('/', async (req, res) => {
         }
 
         await db.query(`UPDATE "${CDEMPRESAENUM.TABELA}" SET "${CDEMPRESAENUM.CDEMPNOME}" = $1 WHERE "${CDEMPRESAENUM.CDEMPID}" = $2`, [data['cdempnome'], data['cdempid']]);
+
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Atualizar empresa');
+        if (acaoId) {
+            await registraAuditoria(
+                `Empresa ID ${data['cdempid']} atualizada`,
+                acaoId,
+                data['cdempid'],
+                data['cdseid'] || null
+            );
+        }
 
         res.status(204).send();
     } catch (err) {
@@ -119,6 +152,17 @@ router.delete('/', async (req, res) => {
             `DELETE FROM "CDEMPRESA" WHERE "CDEMPID" = $1`,
             [cdempid]
         );
+
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Deletar empresa');
+        if (acaoId) {
+            await registraAuditoria(
+                `Empresa ID ${cdempid} deletada`,
+                acaoId,
+                cdempid,
+                null
+            );
+        }
 
         res.status(204).send();
     } catch (err) {

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { montaWhere, montaInsert, montaUpdate, registraExcecao } from "../core/utils.js";
+import { montaWhere, montaInsert, montaUpdate, registraExcecao, registraAuditoria, getCodigoAcao } from "../core/utils.js";
 import CDPRODUTOENUM from '../core/enums/cdproduto.enum.js';
 import CDEMPRESAENUM from "../core/enums/cdempresa.enum.js";
 import CDPRODUTOIMAGEMENUM from "../core/enums/cdprodutoimagem.enum.js";
@@ -41,6 +41,20 @@ router.get('/', async (req, res) => {
             }
         });
 
+        // Registrar auditoria - importante para "Últimos Buscados"
+        const acaoId = await getCodigoAcao('Buscar produtos');
+        if (acaoId && data['cdprodempresaid']) {
+            const descricao = data['cdprodnome'] 
+                ? `Busca de produto "${data['cdprodnome']}" realizada`
+                : `Busca de produtos realizada`;
+            await registraAuditoria(
+                descricao,
+                acaoId,
+                data['cdprodempresaid'],
+                data['cdseid'] || null
+            );
+        }
+
         res.json(rows);
     } catch (err) {
         console.error(`[Buscar produtos]: ${err.message}\n`);
@@ -70,6 +84,17 @@ router.post('/', async (req, res) => {
 
     try {
         const { rows} = await db.query(montaInsert(CDPRODUTOENUM, true), Object.values(data));
+
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Adicionar produto');
+        if (acaoId && data['cdprodempresaid']) {
+            await registraAuditoria(
+                `Produto "${data['cdprodnome']}" adicionado`,
+                acaoId,
+                data['cdprodempresaid'],
+                data['cdseid'] || null
+            );
+        }
 
         res.status(204).send(rows);
     } catch (err) {
@@ -120,6 +145,17 @@ router.put('/', async (req, res) => {
             parametros
         ));
 
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Atualizar produto');
+        if (acaoId && data['cdprodempresaid']) {
+            await registraAuditoria(
+                `Produto ID ${data['cdprodid']} atualizado`,
+                acaoId,
+                data['cdprodempresaid'],
+                data['cdseid'] || null
+            );
+        }
+
         res.status(201).send(rows);
     } catch (err) {
         console.error(`[Atualizar produto]: ${err.message}\n`);
@@ -155,6 +191,17 @@ router.delete('/', async (req, res) => {
             `DELETE FROM "${CDPRODUTOENUM.TABELA}" WHERE "${CDPRODUTOENUM.CDPRODID}" = $1`,
             [cdprodid]
         );
+
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Deletar produto');
+        if (acaoId && empresa) {
+            await registraAuditoria(
+                `Produto ID ${cdprodid} deletado`,
+                acaoId,
+                empresa,
+                null
+            );
+        }
 
         res.status(204).send();
     } catch (err) {

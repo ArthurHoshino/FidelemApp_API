@@ -1,7 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import db from "../db/db.js";
-import { registraExcecao } from '../core/utils.js';
+import { registraExcecao, registraAuditoria, getCodigoAcao } from '../core/utils.js';
 
 import CDPRODUTOIMAGEMENUM from "../core/enums/cdprodutoimagem.enum.js";
 
@@ -45,6 +45,17 @@ router.post('/', produtoImagem.single('prodimagem'), async (req, res) => {
             [req.file.buffer, cdprodimgprodutoid]
         );
 
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Adicionar imagem de produto');
+        if (acaoId && empresa) {
+            await registraAuditoria(
+                `Imagem adicionada para produto ID ${cdprodimgprodutoid}`,
+                acaoId,
+                empresa,
+                null
+            );
+        }
+
         res.status(204).send();
     } catch (err) {
         console.error(`[Inserir imagem]: ${err.message}\n`);
@@ -74,6 +85,17 @@ router.put('/', produtoImagem.single('prodimagem'), async (req, res) => {
             [req.file.buffer, cdprodimgprodutoid]
         );
 
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Atualizar imagem de produto');
+        if (acaoId && empresa) {
+            await registraAuditoria(
+                `Imagem atualizada para produto ID ${cdprodimgprodutoid}`,
+                acaoId,
+                empresa,
+                null
+            );
+        }
+
         res.status(204).send();
     } catch (err) {
         console.error(`[Atualizar imagem]: ${err.message}\n`);
@@ -100,6 +122,17 @@ router.delete('/', async (req, res) => {
             `DELETE FROM "${CDPRODUTOIMAGEMENUM.TABELA}" WHERE "${CDPRODUTOIMAGEMENUM.CDPRODIMGPRODUTOID}" = $1`,
             [cdprodimgprodutoid]
         );
+
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Deletar imagem de produto');
+        if (acaoId && empresa) {
+            await registraAuditoria(
+                `Imagem deletada para produto ID ${cdprodimgprodutoid}`,
+                acaoId,
+                empresa,
+                null
+            );
+        }
 
         res.status(204).send();
     } catch (err) {

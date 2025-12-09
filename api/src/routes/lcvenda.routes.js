@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { montaWhere, montaInsert, montaUpdate, registraExcecao } from "../core/utils";
+import { montaWhere, montaInsert, montaUpdate, registraExcecao, registraAuditoria, getCodigoAcao } from "../core/utils.js";
 import LCVENDAENUM from '../core/enums/lcvenda.enum.js';
 import CDSENHAENUM from "../core/enums/cdsenha.enum.js";
-import db from "../db/db";
+import db from "../db/db.js";
 
 const router = Router();
 
@@ -24,6 +24,17 @@ router.get('/', async (req, res) => {
                         WHERE ${LCVENDAENUM.LCVENID} = $1 AND ${LCVENDAENUM.LCVENSENHAID} = $2`;
         
         const { rows } = await db.query(select, parametros);
+
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Buscar vendas');
+        if (acaoId && data['empresa']) {
+            await registraAuditoria(
+                `Busca de vendas realizada`,
+                acaoId,
+                data['empresa'],
+                data['lcvensenhaid'] || null
+            );
+        }
 
         res.json(rows);
     } catch (err) {
@@ -48,6 +59,17 @@ router.post('/', async (req, res) => {
 
     try {
         await db.query(montaInsert(LCVENDAENUM), Object.values(data));
+
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Adicionar venda');
+        if (acaoId && data['empresa']) {
+            await registraAuditoria(
+                `Venda adicionada`,
+                acaoId,
+                data['empresa'],
+                data['lcvensenhaid'] || null
+            );
+        }
 
         res.status(204).send();
     } catch (err) {
@@ -86,6 +108,17 @@ router.put('/', async (req, res) => {
             [data['lcvenprodutos'], data['lcvenid'], data['lcvensenhaid']]
         );
 
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Atualizar venda');
+        if (acaoId && data['empresa']) {
+            await registraAuditoria(
+                `Venda ID ${data['lcvenid']} atualizada`,
+                acaoId,
+                data['empresa'],
+                data['lcvensenhaid'] || null
+            );
+        }
+
         res.status(201).send();
     } catch (err) {
         console.error(`[Atualizar venda]: ${err.message}\n`);
@@ -103,13 +136,13 @@ router.put('/', async (req, res) => {
 router.delete('/', async (req, res) => {
     const { empresa, lcvenid, lcvensenhaid } = req.body;
 
-    if (!empresa || !lcvenid, !lcvensenhaid) {
+    if (!empresa || !lcvenid || !lcvensenhaid) {
         return res.status(400).json({ error: 'Dados obrigatório faltantes' });
     }
 
     try {
         const { rows } = await db.query(
-            `SELECT 1 FROM "${LCVENDAENUM.TABELA}" WHERE "${LCVENDAENUM.LCVENID}" = $1 AND "${LCVENDAENUM.LCVENSENHAID}"`,
+            `SELECT 1 FROM "${LCVENDAENUM.TABELA}" WHERE "${LCVENDAENUM.LCVENID}" = $1 AND "${LCVENDAENUM.LCVENSENHAID}" = $2`,
             [lcvenid, lcvensenhaid]
         );
 
@@ -118,9 +151,20 @@ router.delete('/', async (req, res) => {
         }
 
         await db.query(
-            `DELETE FROM "${LCVENDAENUM.TABELA}" WHERE "${LCVENDAENUM.LCVENID}" = $1 AND "${LCVENDAENUM.LCVENSENHAID}"`,
+            `DELETE FROM "${LCVENDAENUM.TABELA}" WHERE "${LCVENDAENUM.LCVENID}" = $1 AND "${LCVENDAENUM.LCVENSENHAID}" = $2`,
             [lcvenid, lcvensenhaid]
         );
+
+        // Registrar auditoria
+        const acaoId = await getCodigoAcao('Deletar venda');
+        if (acaoId && empresa) {
+            await registraAuditoria(
+                `Venda ID ${lcvenid} deletada`,
+                acaoId,
+                empresa,
+                lcvensenhaid || null
+            );
+        }
 
         res.status(204).send();
     } catch (err) {
