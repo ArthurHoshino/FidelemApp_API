@@ -174,17 +174,18 @@ export async function getCodigoAcao(descricao) {
  * @param {Integer} acao Código da ação
  * @param {Integer} empresa Código da empresa
  * @param {Integer} usuario Código do usuário (opcional)
+ * @param {Integer} produtoId Código do produto (opcional, usado para busca individual)
  * @return {boolean} Booleano indicando se a inserção deu certo ou não
  */
-export async function registraAuditoria(descricao, acao, empresa, usuario = null) {
+export async function registraAuditoria(descricao, acao, empresa, usuario = null, produtoId = null) {
     try {
         const tempo = DateTime.now().setZone('America/Sao_Paulo').toFormat('yyyy-MM-dd HH:mm:ss');
         console.log(`Tempo: ${tempo}`);
 
         await db.query(
-            `INSERT INTO "${LCAUDITORIAENUM.TABELA}" ("${LCAUDITORIAENUM.LCAUDDESCRICAO}", "${LCAUDITORIAENUM.LCAUDDATA}", "${LCAUDITORIAENUM.LCAUDACAOID}", "${LCAUDITORIAENUM.LCAUDEMPRESAID}", "${LCAUDITORIAENUM.LCAUDSENHAID}")
-            VALUES ($1, $2, $3, $4, $5)`,
-            [descricao, tempo, acao, empresa, usuario]
+            `INSERT INTO "${LCAUDITORIAENUM.TABELA}" ("${LCAUDITORIAENUM.LCAUDDESCRICAO}", "${LCAUDITORIAENUM.LCAUDDATA}", "${LCAUDITORIAENUM.LCAUDACAOID}", "${LCAUDITORIAENUM.LCAUDEMPRESAID}", "${LCAUDITORIAENUM.LCAUDSENHAID}", "${LCAUDITORIAENUM.LCAUDPRODUTOID}")
+            VALUES ($1, $2, $3, $4, $5, $6)`,
+            [descricao, tempo, acao, empresa, usuario, produtoId]
         );
 
         return true;

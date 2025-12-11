@@ -20,40 +20,41 @@ export const up = (pgm) => {
   // Criar índice para o novo campo
   pgm.createIndex('LCAUDITORIA', 'LCAUDSENHAID');
 
-  // Inserir ações na CDACAO
+  // Inserir ações na CDACAO com códigos específicos
   // Códigos de ação baseados nas operações do sistema
   const acoes = [
-    { descricao: 'Buscar empresas' },
-    { descricao: 'Adicionar empresa' },
-    { descricao: 'Atualizar empresa' },
-    { descricao: 'Deletar empresa' },
-    { descricao: 'Buscar cargos' },
-    { descricao: 'Adicionar cargo' },
-    { descricao: 'Atualizar cargo' },
-    { descricao: 'Deletar cargo' },
-    { descricao: 'Buscar usuários' },
-    { descricao: 'Adicionar usuário' },
-    { descricao: 'Atualizar usuário' },
-    { descricao: 'Deletar usuário' },
-    { descricao: 'Buscar produtos' },
-    { descricao: 'Adicionar produto' },
-    { descricao: 'Atualizar produto' },
-    { descricao: 'Deletar produto' },
-    { descricao: 'Buscar imagens de produto' },
-    { descricao: 'Adicionar imagem de produto' },
-    { descricao: 'Atualizar imagem de produto' },
-    { descricao: 'Deletar imagem de produto' },
-    { descricao: 'Buscar vendas' },
-    { descricao: 'Adicionar venda' },
-    { descricao: 'Atualizar venda' },
-    { descricao: 'Deletar venda' },
-    { descricao: 'Buscar últimas consultas' }, 
+    { codigo: 1, descricao: 'Buscar empresas' },
+    { codigo: 2, descricao: 'Adicionar empresa' },
+    { codigo: 3, descricao: 'Atualizar empresa' },
+    { codigo: 4, descricao: 'Deletar empresa' },
+    { codigo: 5, descricao: 'Buscar cargos' },
+    { codigo: 6, descricao: 'Adicionar cargo' },
+    { codigo: 7, descricao: 'Atualizar cargo' },
+    { codigo: 8, descricao: 'Deletar cargo' },
+    { codigo: 9, descricao: 'Buscar usuários' },
+    { codigo: 10, descricao: 'Adicionar usuário' },
+    { codigo: 11, descricao: 'Atualizar usuário' },
+    { codigo: 12, descricao: 'Deletar usuário' },
+    { codigo: 13, descricao: 'Buscar produtos' },
+    { codigo: 14, descricao: 'Buscar produto individual' },
+    { codigo: 15, descricao: 'Adicionar produto' },
+    { codigo: 16, descricao: 'Atualizar produto' },
+    { codigo: 17, descricao: 'Deletar produto' },
+    { codigo: 18, descricao: 'Buscar imagens de produto' },
+    { codigo: 19, descricao: 'Adicionar imagem de produto' },
+    { codigo: 20, descricao: 'Atualizar imagem de produto' },
+    { codigo: 21, descricao: 'Deletar imagem de produto' },
+    { codigo: 22, descricao: 'Buscar vendas' },
+    { codigo: 23, descricao: 'Adicionar venda' },
+    { codigo: 24, descricao: 'Atualizar venda' },
+    { codigo: 25, descricao: 'Deletar venda' },
+    { codigo: 26, descricao: 'Buscar últimas consultas' }, 
   ];
 
-  // Inserir cada ação usando uma abordagem mais segura
+  // Inserir cada ação com código específico
   acoes.forEach((acao) => {
     pgm.sql(
-      `INSERT INTO "CDACAO" ("CDACAODESCRICAO") VALUES ('${acao.descricao}')`
+      `INSERT INTO "CDACAO" ("CDACAOID", "CDACAODESCRICAO") VALUES (${acao.codigo}, '${acao.descricao}')`
     );
   });
 };

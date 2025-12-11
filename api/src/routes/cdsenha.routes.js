@@ -3,7 +3,8 @@ import db from '../db/db.js';
 import CDCARGOENUM from "../core/enums/cdcargo.enum.js";
 import CDEMPRESAENUM from '../core/enums/cdempresa.enum.js';
 import CDSENHAENUM from '../core/enums/cdsenha.enum.js';
-import { montaInsert, montaUpdate, montaWhere, registraExcecao, registraAuditoria, getCodigoAcao } from '../core/utils.js';
+import ACAOCOD from '../core/enums/acaoCod.enum.js';
+import { montaInsert, montaUpdate, montaWhere, registraExcecao, registraAuditoria } from '../core/utils.js';
 
 const router = Router();
 
@@ -35,7 +36,7 @@ router.get('/', async (req, res) => {
         const { rows } = await db.query(select, parametros);
 
         // Registrar auditoria
-        const acaoId = await getCodigoAcao('Buscar usuários');
+        const acaoId = ACAOCOD['Buscar usuários'];
         if (acaoId && data['empresa']) {
             await registraAuditoria(
                 `Busca de usuários realizada para empresa ${data['empresa']}`,
@@ -79,7 +80,7 @@ router.post('/', async (req, res) => {
         await db.query(montaInsert(CDSENHAENUM), Object.values(data).slice(0, -1));
 
         // Registrar auditoria
-        const acaoId = await getCodigoAcao('Adicionar usuário');
+        const acaoId = ACAOCOD['Adicionar usuário'];
         if (acaoId && data['empresa']) {
             await registraAuditoria(
                 `Usuário "${data['cdsenome']}" adicionado`,
@@ -139,7 +140,7 @@ router.put('/', async (req, res) => {
         );
 
         // Registrar auditoria
-        const acaoId = await getCodigoAcao('Atualizar usuário');
+        const acaoId = ACAOCOD['Atualizar usuário'];
         if (acaoId && data['empresa']) {
             await registraAuditoria(
                 `Usuário ID ${data['cdseid']} atualizado`,
@@ -186,7 +187,7 @@ router.delete('/', async (req, res) => {
         );
 
         // Registrar auditoria
-        const acaoId = await getCodigoAcao('Deletar usuário');
+        const acaoId = ACAOCOD['Deletar usuário'];
         if (acaoId && empresa) {
             await registraAuditoria(
                 `Usuário ID ${cdseid} deletado`,

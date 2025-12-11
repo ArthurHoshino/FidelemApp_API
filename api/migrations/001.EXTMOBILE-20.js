@@ -23,7 +23,7 @@ export const up = (pgm) => {
 
   // Tabela: CDACAO
   pgm.createTable('CDACAO', {
-    CDACAOID: { type: 'serial', primaryKey: true },
+    CDACAOID: { type: 'integer', primaryKey: true },
     CDACAODESCRICAO: { type: 'varchar(45)', notNull: false },
   });
 

@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { montaWhere, montaInsert, montaUpdate, registraExcecao, registraAuditoria, getCodigoAcao } from "../core/utils.js";
+import { montaWhere, montaInsert, montaUpdate, registraExcecao, registraAuditoria } from "../core/utils.js";
 import CDPRODUTOENUM from '../core/enums/cdproduto.enum.js';
 import CDEMPRESAENUM from "../core/enums/cdempresa.enum.js";
 import CDPRODUTOIMAGEMENUM from "../core/enums/cdprodutoimagem.enum.js";
+import ACAOCOD from "../core/enums/acaoCod.enum.js";
 import db from "../db/db.js";
 
 const router = Router();
@@ -42,16 +43,24 @@ router.get('/', async (req, res) => {
         });
 
         // Registrar auditoria - importante para "Últimos Buscados"
-        const acaoId = await getCodigoAcao('Buscar produtos');
+        // Verifica se é busca individual (tem cdprodid) ou busca geral
+        const isBuscaIndividual = data['cdprodid'] !== undefined;
+        const acaoId = isBuscaIndividual ? ACAOCOD['Buscar produto individual'] : ACAOCOD['Buscar produtos'];
+        
         if (acaoId && data['cdprodempresaid']) {
             const descricao = data['cdprodnome'] 
                 ? `Busca de produto "${data['cdprodnome']}" realizada`
                 : `Busca de produtos realizada`;
+            
+            // Se for busca individual, passa o ID do produto para facilitar query depois
+            const produtoId = isBuscaIndividual ? parseInt(data['cdprodid']) : null;
+            
             await registraAuditoria(
                 descricao,
                 acaoId,
                 data['cdprodempresaid'],
-                data['cdseid'] || null
+                data['cdseid'] || null,
+                produtoId
             );
         }
 
@@ -86,7 +95,7 @@ router.post('/', async (req, res) => {
         const { rows} = await db.query(montaInsert(CDPRODUTOENUM, true), Object.values(data));
 
         // Registrar auditoria
-        const acaoId = await getCodigoAcao('Adicionar produto');
+        const acaoId = ACAOCOD['Adicionar produto'];
         if (acaoId && data['cdprodempresaid']) {
             await registraAuditoria(
                 `Produto "${data['cdprodnome']}" adicionado`,
@@ -146,7 +155,7 @@ router.put('/', async (req, res) => {
         ));
 
         // Registrar auditoria
-        const acaoId = await getCodigoAcao('Atualizar produto');
+        const acaoId = ACAOCOD['Atualizar produto'];
         if (acaoId && data['cdprodempresaid']) {
             await registraAuditoria(
                 `Produto ID ${data['cdprodid']} atualizado`,
@@ -193,7 +202,7 @@ router.delete('/', async (req, res) => {
         );
 
         // Registrar auditoria
-        const acaoId = await getCodigoAcao('Deletar produto');
+        const acaoId = ACAOCOD['Deletar produto'];
         if (acaoId && empresa) {
             await registraAuditoria(
                 `Produto ID ${cdprodid} deletado`,

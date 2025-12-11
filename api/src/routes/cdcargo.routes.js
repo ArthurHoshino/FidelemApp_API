@@ -2,7 +2,8 @@ import { Router } from "express";
 import db from '../db/db.js';
 import CDCARGOENUM from "../core/enums/cdcargo.enum.js";
 import CDEMPRESAENUM from "../core/enums/cdempresa.enum.js";
-import { montaInsert, montaUpdate, montaWhere, registraAuditoria, getCodigoAcao, registraExcecao } from "../core/utils.js";
+import ACAOCOD from "../core/enums/acaoCod.enum.js";
+import { montaInsert, montaUpdate, montaWhere, registraAuditoria, registraExcecao } from "../core/utils.js";
 
 const router = Router();
 
@@ -41,7 +42,7 @@ router.get('/', async (req, res) => {
         ({ rows } = await db.query(select, parametros))
 
         // Registrar auditoria
-        const acaoId = await getCodigoAcao('Buscar cargos');
+        const acaoId = ACAOCOD['Buscar cargos'];
         if (acaoId && data['cdcarempresaid']) {
             await registraAuditoria(
                 `Busca de cargos realizada para empresa ${data['cdcarempresaid']}`,
@@ -85,7 +86,7 @@ router.post('/', async (req, res) => {
         await db.query(montaInsert(CDCARGOENUM), Object.values(data));
 
         // Registrar auditoria
-        const acaoId = await getCodigoAcao('Adicionar cargo');
+        const acaoId = ACAOCOD['Adicionar cargo'];
         if (acaoId && data['cdcarempresaid']) {
             await registraAuditoria(
                 `Cargo "${data['cdcarnome']}" adicionado`,
@@ -142,7 +143,7 @@ router.put('/', async (req, res) => {
         await db.query(`UPDATE "${CDCARGOENUM.TABELA}" ` + montaUpdate(colunas), parametros);
 
         // Registrar auditoria
-        const acaoId = await getCodigoAcao('Atualizar cargo');
+        const acaoId = ACAOCOD['Atualizar cargo'];
         if (acaoId && data['cdcarempresaid']) {
             await registraAuditoria(
                 `Cargo ID ${data['cdcarid']} atualizado`,
@@ -186,7 +187,7 @@ router.delete('/', async (req, res) => {
         await db.query(`DELETE FROM "${CDCARGOENUM.TABELA}" WHERE "${CDCARGOENUM.CDCARID}" = $1 AND "${CDCARGOENUM.CDCAREMPRESAID}" = $2`, Object.values(data));
 
         // Registrar auditoria
-        const acaoId = await getCodigoAcao('Deletar cargo');
+        const acaoId = ACAOCOD['Deletar cargo'];
         if (acaoId && data['cdcarempresaid']) {
             await registraAuditoria(
                 `Cargo ID ${data['cdcarid']} deletado`,

@@ -1,7 +1,8 @@
 import { Router } from "express";
 import db from '../db/db.js';
 import CDEMPRESAENUM from '../core/enums/cdempresa.enum.js';
-import { getAllEntidades, getEntidadeById, getEntidadeByNomeDescricao, montaUpdate, montaWhere, registraAuditoria, getCodigoAcao, registraExcecao } from '../core/utils.js';
+import ACAOCOD from '../core/enums/acaoCod.enum.js';
+import { getAllEntidades, getEntidadeById, getEntidadeByNomeDescricao, montaUpdate, montaWhere, registraAuditoria, registraExcecao } from '../core/utils.js';
 
 const router = Router();
 
@@ -25,7 +26,7 @@ router.get('/', async (req, res) => {
         const { rows } = await db.query(select, parametros);
 
         // Registrar auditoria
-        const acaoId = await getCodigoAcao('Buscar empresas');
+        const acaoId = ACAOCOD['Buscar empresas'];
         if (acaoId && data['cdempid']) {
             await registraAuditoria(
                 `Busca de empresas realizada`,
@@ -69,7 +70,7 @@ router.post('/', async (req, res) => {
         );
 
         // Registrar auditoria
-        const acaoId = await getCodigoAcao('Adicionar empresa');
+        const acaoId = ACAOCOD['Adicionar empresa'];
         if (acaoId && insertedRows[0]?.CDEMPID) {
             await registraAuditoria(
                 `Empresa "${cdempnome}" adicionada`,
@@ -110,7 +111,7 @@ router.put('/', async (req, res) => {
         await db.query(`UPDATE "${CDEMPRESAENUM.TABELA}" SET "${CDEMPRESAENUM.CDEMPNOME}" = $1 WHERE "${CDEMPRESAENUM.CDEMPID}" = $2`, [data['cdempnome'], data['cdempid']]);
 
         // Registrar auditoria
-        const acaoId = await getCodigoAcao('Atualizar empresa');
+        const acaoId = ACAOCOD['Atualizar empresa'];
         if (acaoId) {
             await registraAuditoria(
                 `Empresa ID ${data['cdempid']} atualizada`,
@@ -154,7 +155,7 @@ router.delete('/', async (req, res) => {
         );
 
         // Registrar auditoria
-        const acaoId = await getCodigoAcao('Deletar empresa');
+        const acaoId = ACAOCOD['Deletar empresa'];
         if (acaoId) {
             await registraAuditoria(
                 `Empresa ID ${cdempid} deletada`,

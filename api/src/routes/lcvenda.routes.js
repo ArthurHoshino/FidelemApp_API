@@ -1,7 +1,8 @@
 import { Router } from "express";
-import { montaWhere, montaInsert, montaUpdate, registraExcecao, registraAuditoria, getCodigoAcao } from "../core/utils.js";
+import { montaWhere, montaInsert, montaUpdate, registraExcecao, registraAuditoria } from "../core/utils.js";
 import LCVENDAENUM from '../core/enums/lcvenda.enum.js';
 import CDSENHAENUM from "../core/enums/cdsenha.enum.js";
+import ACAOCOD from "../core/enums/acaoCod.enum.js";
 import db from "../db/db.js";
 
 const router = Router();
@@ -26,7 +27,7 @@ router.get('/', async (req, res) => {
         const { rows } = await db.query(select, parametros);
 
         // Registrar auditoria
-        const acaoId = await getCodigoAcao('Buscar vendas');
+        const acaoId = ACAOCOD['Buscar vendas'];
         if (acaoId && data['empresa']) {
             await registraAuditoria(
                 `Busca de vendas realizada`,
@@ -61,7 +62,7 @@ router.post('/', async (req, res) => {
         await db.query(montaInsert(LCVENDAENUM), Object.values(data));
 
         // Registrar auditoria
-        const acaoId = await getCodigoAcao('Adicionar venda');
+        const acaoId = ACAOCOD['Adicionar venda'];
         if (acaoId && data['empresa']) {
             await registraAuditoria(
                 `Venda adicionada`,
@@ -109,7 +110,7 @@ router.put('/', async (req, res) => {
         );
 
         // Registrar auditoria
-        const acaoId = await getCodigoAcao('Atualizar venda');
+        const acaoId = ACAOCOD['Atualizar venda'];
         if (acaoId && data['empresa']) {
             await registraAuditoria(
                 `Venda ID ${data['lcvenid']} atualizada`,
@@ -156,7 +157,7 @@ router.delete('/', async (req, res) => {
         );
 
         // Registrar auditoria
-        const acaoId = await getCodigoAcao('Deletar venda');
+        const acaoId = ACAOCOD['Deletar venda'];
         if (acaoId && empresa) {
             await registraAuditoria(
                 `Venda ID ${lcvenid} deletada`,
