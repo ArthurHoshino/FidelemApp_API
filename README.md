@@ -41,6 +41,8 @@ curl http://localhost:3000
 
 Isso deve mostrar a seguinte mensagem: `{"message":"API FidelemApp rodando!"}`
 
+Para acessar a api pelo aplicativo FideleApp, é necessário trocar o valor da variável `baseUrl` no arquivo `web_client.dart` com o endereço IPv4 da sua rede e ter o firewall configurado para receber requisições externas, pois o seu dispositvo móvel o qual possui o aplicativo instalado é externo ao local do equipamento que está rodando o servidor.
+
 #### Outros comandos
 | Descrição | Comando |
 | :-------- | ------: |
