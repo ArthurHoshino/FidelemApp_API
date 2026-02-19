@@ -46,8 +46,10 @@ Para acessar a api pelo aplicativo FideleApp, é necessário trocar o valor da v
 #### Outros comandos
 | Descrição | Comando |
 | :-------- | ------: |
-| Para encerrar a execução do projeto, mas sem perder os dados | `make down` |
-| Para encerrar e limpar containeres, redes e volumes | `make clean` |
+| Para encerrar a execução do projeto | `make down` |
+| Para verificar os logs dos containers | `make logs` |
+| Para verificar os logs do container da api | `make logs-api` |
+| Para verificar os logs do container do banco | `make logs-db` |
 
 ### 🧑‍💻 Integrantes
 * [Arthur Osaka Hoshino](https://github.com/ArthurHoshino)
