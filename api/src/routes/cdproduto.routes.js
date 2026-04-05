@@ -56,7 +56,7 @@ router.get('/', async (req, res) => {
 // Rotas POST
 // <============================>
 router.post('/', async (req, res) => {
-    const data = JSON.parse(req.body);
+    const data = req.body;
 
     if (
         !data['cdprodnome'] ||
@@ -69,7 +69,34 @@ router.post('/', async (req, res) => {
     }
 
     try {
-        const { rows} = await db.query(montaInsert(CDPRODUTOENUM, true), Object.values(data));
+        const { rows } = await db.query(
+            `SELECT 1 FROM "${CDPRODUTOENUM.TABELA}" INNER JOIN "${CDEMPRESAENUM.TABELA}" ON "${CDEMPRESAENUM.CDEMPID}" = "${CDPRODUTOENUM.CDPRODEMPRESAID}" WHERE "${CDPRODUTOENUM.CDPRODNOME}" = $1 AND "${CDPRODUTOENUM.CDPRODEMPRESAID}" = $2`,
+            [data['cdprodnome'], data['cdprodempresaid']]
+        );
+
+        if (rows.length > 0) {
+            return res.status(404).json({ error: 'Produto já cadastrado' });
+        }
+
+        await db.query(`INSERT INTO "CDPRODUTO" (
+                "CDPRODNOME",
+                "CDPRODDESCRICAO",
+                ${data["cdprodprecoreal"] != null ? '"CDPRODPRECOREAL",' : ""}
+                ${data["cdprodprecoponto"] ? '"CDPRODPRECOPONTO",' : ""}
+                ${data["cdprodprecodesconto"] ? '"CDPRODPRECODESCONTO",' : ""}
+                "CDPRODQTDESTOQUE",
+                "CDPRODEMPRESAID",
+                "CDPRODCATEGORIAID"
+            ) VALUES (
+                '${data["cdprodnome"]}',
+                '${data["cdproddescricao"]}',
+                ${data["cdprodprecoreal"] != null ? data["cdprodprecoreal"]+',' : ""}
+                ${data["cdprodprecoponto"] ? data["cdprodprecoponto"]+',' : ""}
+                ${data["cdprodprecodesconto"] ? data["cdprodprecodesconto"]+',' : ""}
+                ${data["cdprodqtdestoque"]},
+                ${data["cdprodempresaid"]},
+                ${data["cdprodcategoriaid"]}
+            );`);
 
         res.status(204).send(rows);
     } catch (err) {

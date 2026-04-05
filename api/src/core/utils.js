@@ -180,6 +180,7 @@ export async function registraExcecao(descricao, empresa) {
     try {
         const tempo = DateTime.now().setZone('America/Sao_Paulo').toFormat('yyyy-MM-dd HH:mm:ss');
         console.log(`Tempo: ${tempo}`);
+        console.log(`Descricao: ${descricao}`);
 
         await db.query(
             `INSERT INTO "${CDEXCECAOENUM.TABELA}" ("${CDEXCECAOENUM.CDEXDESCRICAO}", "${CDEXCECAOENUM.CDEXDATA}", "${CDEXCECAOENUM.CDEXEMPRESAID}")
