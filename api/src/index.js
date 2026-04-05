@@ -8,6 +8,7 @@ import lcAuditoriaRoutes from './routes/lcauditoria.routes.js';
 import cdExcecaoRoutes from './routes/cdexcecao.routes.js';
 import cdProdutoRoutes from './routes/cdproduto.routes.js';
 import cdProdutoImagem from './routes/cdprodutoimagem.routes.js';
+import cdCategoriaRoutes from './routes/cdcategoria.routes.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -26,6 +27,7 @@ app.use('/lcauditoria', lcAuditoriaRoutes);
 app.use('/cdexcecao', cdExcecaoRoutes);
 app.use('/cdproduto', cdProdutoRoutes);
 app.use('/cdprodutoimagem', cdProdutoImagem);
+app.use('/cdcategoria', cdCategoriaRoutes);
 
 app.listen(port, () => {
     console.log(`Servidor rodando em http://localhost:${port}\n`);
