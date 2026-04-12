@@ -20,17 +20,23 @@ router.get('/', async (req, res) => {
     try {
         const colunasCondicoes = [CDEMPRESAENUM.CDEMPID];
         const parametros = [data['empresa']];
+        let condicaoSemCargo = "";
 
         for (const [key, value] of Object.entries(data)) {
-            if (key === 'empresa') continue;
+            if (key === 'empresa' || key === 'not_cargo') continue;
 
             colunasCondicoes.push(CDSENHAENUM[key.toUpperCase()]);
             parametros.push(value);
         }
 
-        const select = `SELECT "CDSENHA".* FROM "CDSENHA"
+        if (data['not_cargo']) {
+            condicaoSemCargo = ` AND "CDCARGO"."CDCARNOME" != $${parametros.length + 1}`;
+            parametros.push(data['not_cargo']);
+        }
+
+        const select = `SELECT "CDSENHA".*, "CDCARGO"."CDCARNOME", "CDEMPRESA"."CDEMPNOME" FROM "CDSENHA"
             JOIN "CDCARGO" ON "CDCARID" = "CDSECARGOID"
-            JOIN "CDEMPRESA" ON "CDEMPID" = "CDCAREMPRESAID" ` + montaWhere(colunasCondicoes);
+            JOIN "CDEMPRESA" ON "CDEMPID" = "CDCAREMPRESAID" ` + montaWhere(colunasCondicoes) + condicaoSemCargo;
 
         const { rows } = await db.query(select, parametros);
         res.json(rows);
@@ -97,7 +103,7 @@ router.put('/', async (req, res) => {
             return res.status(404).json({ error: 'Usuário não encontrado' });
         }
 
-        const colunas    = [];
+        const colunas = [];
         const parametros = [];
 
         for (const [key, value] of Object.entries(data)) {
@@ -123,7 +129,7 @@ router.put('/', async (req, res) => {
             error: err.message,
             detalhes: err.cause ? err.cause : null
         });
-    } 
+    }
 });
 
 // <============================>
@@ -159,7 +165,7 @@ router.delete('/', async (req, res) => {
             error: err.message,
             detalhes: err.cause ? err.cause : null
         });
-    } 
+    }
 });
 
 export default router;

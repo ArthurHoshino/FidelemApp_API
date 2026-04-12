@@ -1,7 +1,7 @@
 import { Router } from "express";
 import db from '../db/db.js';
 import CDEMPRESAENUM from '../core/enums/cdempresa.enum.js';
-import { getAllEntidades, getEntidadeById, getEntidadeByNomeDescricao, montaUpdate, montaWhere } from '../core/utils.js';
+import { getAllEntidades, getEntidadeById, getEntidadeByNomeDescricao, montaUpdate, montaWhere, registraExcecao } from '../core/utils.js';
 
 const router = Router();
 
