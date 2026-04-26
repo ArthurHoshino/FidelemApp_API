@@ -2,7 +2,7 @@ import { Router } from "express";
 import db from '../db/db.js';
 import CDCARGOENUM from "../core/enums/cdcargo.enum.js";
 import CDEMPRESAENUM from "../core/enums/cdempresa.enum.js";
-import { montaInsert, montaUpdate, montaWhere } from "../core/utils.js";
+import { montaInsert, montaUpdate, montaWhere, registraExcecao } from "../core/utils.js";
 
 const router = Router();
 
@@ -27,7 +27,7 @@ router.get('/', async (req, res) => {
             return res.status(404).json({ error: 'Empresa não cadastrada' });
         }
 
-        const colunas    = [];
+        const colunas = [];
         const parametros = [];
 
         for (const [key, value] of Object.entries(data)) {
@@ -107,7 +107,7 @@ router.put('/', async (req, res) => {
             return res.status(404).json({ error: 'Cargo não encontrado' });
         }
 
-        const colunas    = [];
+        const colunas = [];
         const parametros = [];
 
         for (const [key, value] of Object.entries(data)) {
