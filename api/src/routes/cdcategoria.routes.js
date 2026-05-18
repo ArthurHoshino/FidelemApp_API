@@ -1,7 +1,7 @@
 import { Router } from "express";
 import db from "../db/db.js";
 import CDCATEGORIAENUM from "../core/enums/cdcategoria.enum.js";
-import { montaInsert, montaUpdate, montaWhere } from "../core/utils.js";
+import { montaInsert, montaUpdate, montaWhere, registraExcecao } from "../core/utils.js";
 
 const router = Router();
 
