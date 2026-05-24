@@ -100,6 +100,7 @@ router.put('/', async (req, res) => {
         const parametros = [];
 
         for (const [key, value] of Object.entries(data)) {
+            if (CDCATEGORIAENUM[key.toUpperCase()] === undefined) continue;
             if (key === 'cdcatid') continue;
 
             colunas.push(CDCATEGORIAENUM[key.toUpperCase()]);
