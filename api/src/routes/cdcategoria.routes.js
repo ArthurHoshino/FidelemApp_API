@@ -1,7 +1,7 @@
 import { Router } from "express";
 import db from "../db/db.js";
 import CDCATEGORIAENUM from "../core/enums/cdcategoria.enum.js";
-import { montaInsert, montaUpdate, montaWhere, registraExcecao } from "../core/utils.js";
+import { montaInsert, montaUpdate, montaWhere } from "../core/utils.js";
 
 const router = Router();
 
@@ -49,7 +49,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
     const data = req.body;
 
-    if (!data['cdcatnome']) {
+    if (!data['cdcatnome'] || !data['cdcatempresaid']) {
         return res.status(400).json({ error: 'Existem dados obrigatórios faltantes' });
     }
 
@@ -88,8 +88,8 @@ router.put('/', async (req, res) => {
 
     try {
         const { rows } = await db.query(
-            `SELECT 1 FROM "${CDCATEGORIAENUM.TABELA}" WHERE "${CDCATEGORIAENUM.CDCATNOME}" = $1 AND "${CDCATEGORIAENUM.CDCATID}" = $2`,
-            [data['cdcatnome'], data['cdcatid']]
+            `SELECT 1 FROM "${CDCATEGORIAENUM.TABELA}" WHERE "${CDCATEGORIAENUM.CDCATEMPRESAID}" = $1 AND "${CDCATEGORIAENUM.CDCATID}" = $2`,
+            [data['cdcatempresaid'], data['cdcatid']]
         );
 
         if (rows.length <= 0) {
@@ -100,7 +100,6 @@ router.put('/', async (req, res) => {
         const parametros = [];
 
         for (const [key, value] of Object.entries(data)) {
-            if (CDCATEGORIAENUM[key.toUpperCase()] === undefined) continue;
             if (key === 'cdcatid') continue;
 
             colunas.push(CDCATEGORIAENUM[key.toUpperCase()]);
@@ -125,30 +124,30 @@ router.put('/', async (req, res) => {
 
 // <============================>
 // Rotas DELETE
-// <============================>
+// // <============================>
 router.delete('/', async (req, res) => {
     const data = req.body;
 
-    if (!data['cdcatid']) {
+    if (!data['cdcatid'] || !data['cdcatempresaid']) {
         return res.status(400).json({ error: 'Dados obrigatório faltantes' });
     }
 
     try {
         const { rows } = await db.query(
-            `SELECT 1 FROM "${CDCATEGORIAENUM.TABELA}" WHERE "${CDCATEGORIAENUM.CDCATID}" = $1`,
-            [data['cdcatid']]
+            `SELECT 1 FROM "${CDCATEGORIAENUM.TABELA}" WHERE "${CDCATEGORIAENUM.CDCATEMPRESAID}" = $1 AND "${CDCATEGORIAENUM.CDCATID}" = $2`,
+            [data['cdcatempresaid'], data['cdcatid']]
         );
 
         if (rows.length <= 0) {
-            return res.status(404).json({ error: 'Categoria não encontrada' });
+            return res.status(404).json({ error: 'Cargo não encontrado' });
         }
 
-        await db.query(`DELETE FROM "${CDCATEGORIAENUM.TABELA}" WHERE "${CDCATEGORIAENUM.CDCATID}" = $1`, Object.values(data));
+        await db.query(`DELETE FROM "${CDCATEGORIAENUM.TABELA}" WHERE "${CDCATEGORIAENUM.CDCATID}" = $1 AND "${CDCATEGORIAENUM.CDCATEMPRESAID}" = $2`, Object.values(data));
 
         res.status(204).send();
     } catch (err) {
         console.error(`[Deletar categoria]: ${err.message}\n`);
-        registraExcecao(err.stack, 0);
+        registraExcecao(err.stack, data['cdcatempresaid']);
         res.status(500).json({
             error: err.message,
             detalhes: err.cause ? err.cause : null
