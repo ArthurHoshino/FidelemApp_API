@@ -9,6 +9,7 @@ import cdExcecaoRoutes from './routes/cdexcecao.routes.js';
 import cdProdutoRoutes from './routes/cdproduto.routes.js';
 import cdProdutoImagem from './routes/cdprodutoimagem.routes.js';
 import cdCategoriaRoutes from './routes/cdcategoria.routes.js';
+import lcCarrinhoRoutes from './routes/lccarrinho.routes.js';
 import geminiRoutes from './routes/gemini.routes.js';
 
 const app = express();
@@ -29,6 +30,7 @@ app.use('/cdexcecao', cdExcecaoRoutes);
 app.use('/cdproduto', cdProdutoRoutes);
 app.use('/cdprodutoimagem', cdProdutoImagem);
 app.use('/cdcategoria', cdCategoriaRoutes);
+app.use('/lccarrinho', lcCarrinhoRoutes);
 app.use('/ia-service', geminiRoutes);
 
 app.listen(port, () => {
