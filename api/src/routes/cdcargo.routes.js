@@ -74,7 +74,7 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: 'Cargo já está cadastrado' });
         }
 
-        await db.query(montaInsert(CDCARGOENUM), Object.values(data));
+        const insertResult = await db.query(montaInsert(CDCARGOENUM, true), Object.values(data));
 
         await registraAuditoria(
             `Novo cargo cadastrado: ${data['cdcarnome']}`,
@@ -82,7 +82,7 @@ router.post('/', async (req, res) => {
             data['cdcarempresaid']
         );
 
-        res.status(201).send();
+        res.status(201).json(insertResult.rows[0]);
     } catch (err) {
         console.error(`[Adicionar cargo]: ${err.message}\n`);
         registraExcecao(err.stack, data['cdcarempresaid']);
