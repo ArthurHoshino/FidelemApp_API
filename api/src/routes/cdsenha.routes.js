@@ -89,14 +89,14 @@ router.post('/', async (req, res) => {
 router.put('/', async (req, res) => {
     const data = req.body;
 
-    if (!data['EMPRESA'] || !data['CDSEID']) {
+    if (!data['empresa'] || !data['cdseid']) {
         return res.status(400).json({ error: 'Dados obrigatório faltantes' });
     }
 
     try {
         const { rows } = await db.query(
             `SELECT 1 FROM "${CDSENHAENUM.TABELA}" WHERE "${CDSENHAENUM.CDSEID}" = $1`,
-            [data['CDSEID']]
+            [data['cdseid']]
         );
 
         if (rows.length <= 0) {
@@ -108,14 +108,14 @@ router.put('/', async (req, res) => {
 
         for (const [key, value] of Object.entries(data)) {
             if (CDSENHAENUM[key.toUpperCase()] === undefined) continue;
-            if (key === 'CDSEID' || key === 'EMPRESA') continue;
+            if (key === 'cdseid' || key === 'empresa') continue;
 
             colunas.push(CDSENHAENUM[key.toUpperCase()]);
             parametros.push(value);
         }
 
         colunas.push(CDSENHAENUM.CDSEID);
-        parametros.push(data['CDSEID']);
+        parametros.push(data['cdseid']);
 
         console.log(`UPDATE "${CDSENHAENUM.TABELA}" ` + montaUpdate(colunas));
         console.log(parametros);
@@ -127,7 +127,7 @@ router.put('/', async (req, res) => {
         res.status(201).send();
     } catch (err) {
         console.error(`[Atualizar usuário]: ${err.message}\n`);
-        registraExcecao(err.stack, data['EMPRESA']);
+        registraExcecao(err.stack, data['empresa']);
         res.status(500).json({
             error: err.message,
             detalhes: err.cause ? err.cause : null
