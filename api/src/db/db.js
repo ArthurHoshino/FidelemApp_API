@@ -8,7 +8,8 @@ pool.on('connect', () => {
     console.log('PostgreSQL conectado via pool.\n');
 });
 
-// Exporta apenas a função de query
+// Exporta as funções de query e client para transação
 export default {
     query: (text, params) => pool.query(text, params),
+    getClient: () => pool.connect(),
 };
