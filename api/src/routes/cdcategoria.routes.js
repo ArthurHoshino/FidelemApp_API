@@ -1,7 +1,7 @@
 import { Router } from "express";
 import db from "../db/db.js";
 import CDCATEGORIAENUM from "../core/enums/cdcategoria.enum.js";
-import { montaInsert, montaUpdate, montaWhere } from "../core/utils.js";
+import { montaInsert, montaUpdate, montaWhere, registraExcecao, registraAuditoria } from "../core/utils.js";
 
 const router = Router();
 
@@ -65,6 +65,12 @@ router.post('/', async (req, res) => {
 
         await db.query(montaInsert(CDCATEGORIAENUM), Object.values(data));
 
+        await registraAuditoria(
+            `Nova categoria cadastrada: ${data['cdcatnome']}`,
+            11, // CADASTRO_CATEGORIA
+            data['cdcatempresaid']
+        );
+
         res.status(201).send();
     } catch (err) {
         console.error(`[Adicionar categoria]: ${err.message}\n`);
@@ -111,6 +117,12 @@ router.put('/', async (req, res) => {
 
         await db.query(`UPDATE "${CDCATEGORIAENUM.TABELA}" ` + montaUpdate(colunas), parametros);
 
+        await registraAuditoria(
+            `Categoria atualizada (ID: ${data['cdcatid']})`,
+            12, // EDICAO_CATEGORIA
+            data['cdcatempresaid']
+        );
+
         res.status(204).send();
     } catch (err) {
         console.error(`[Atualizar categoria]: ${err.message}\n`);
@@ -143,6 +155,12 @@ router.delete('/', async (req, res) => {
         }
 
         await db.query(`DELETE FROM "${CDCATEGORIAENUM.TABELA}" WHERE "${CDCATEGORIAENUM.CDCATID}" = $1 AND "${CDCATEGORIAENUM.CDCATEMPRESAID}" = $2`, Object.values(data));
+
+        await registraAuditoria(
+            `Categoria removida (ID: ${data['cdcatid']})`,
+            13, // REMOCAO_CATEGORIA
+            data['cdcatempresaid']
+        );
 
         res.status(204).send();
     } catch (err) {

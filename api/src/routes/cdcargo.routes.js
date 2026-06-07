@@ -2,7 +2,7 @@ import { Router } from "express";
 import db from '../db/db.js';
 import CDCARGOENUM from "../core/enums/cdcargo.enum.js";
 import CDEMPRESAENUM from "../core/enums/cdempresa.enum.js";
-import { montaInsert, montaUpdate, montaWhere, registraExcecao } from "../core/utils.js";
+import { montaInsert, montaUpdate, montaWhere, registraExcecao, registraAuditoria } from "../core/utils.js";
 
 const router = Router();
 
@@ -76,6 +76,12 @@ router.post('/', async (req, res) => {
 
         await db.query(montaInsert(CDCARGOENUM), Object.values(data));
 
+        await registraAuditoria(
+            `Novo cargo cadastrado: ${data['cdcarnome']}`,
+            8, // CADASTRO_CARGO
+            data['cdcarempresaid']
+        );
+
         res.status(201).send();
     } catch (err) {
         console.error(`[Adicionar cargo]: ${err.message}\n`);
@@ -123,6 +129,12 @@ router.put('/', async (req, res) => {
 
         await db.query(`UPDATE "${CDCARGOENUM.TABELA}" ` + montaUpdate(colunas), parametros);
 
+        await registraAuditoria(
+            `Cargo atualizado (ID: ${data['cdcarid']})`,
+            9, // EDICAO_CARGO
+            data['cdcarempresaid']
+        );
+
         res.status(204).send();
     } catch (err) {
         console.error(`[Atualizar cargo]: ${err.message}\n`);
@@ -155,6 +167,12 @@ router.delete('/', async (req, res) => {
         }
 
         await db.query(`DELETE FROM "${CDCARGOENUM.TABELA}" WHERE "${CDCARGOENUM.CDCARID}" = $1 AND "${CDCARGOENUM.CDCAREMPRESAID}" = $2`, Object.values(data));
+
+        await registraAuditoria(
+            `Cargo removido (ID: ${data['cdcarid']})`,
+            10, // REMOCAO_CARGO
+            data['cdcarempresaid']
+        );
 
         res.status(204).send();
     } catch (err) {
