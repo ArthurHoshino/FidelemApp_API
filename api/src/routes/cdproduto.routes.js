@@ -3,6 +3,7 @@ import { montaWhere, montaInsert, montaUpdate, registraExcecao } from "../core/u
 import CDPRODUTOENUM from '../core/enums/cdproduto.enum.js';
 import CDEMPRESAENUM from "../core/enums/cdempresa.enum.js";
 import CDPRODUTOIMAGEMENUM from "../core/enums/cdprodutoimagem.enum.js";
+import LCCARRINHOENUM from "../core/enums/lccarrinho.enum.js";
 import db from "../db/db.js";
 
 const router = Router();
@@ -28,9 +29,10 @@ router.get('/', async (req, res) => {
             parametros.push(value);
         }
 
-        const select = `SELECT "${CDPRODUTOENUM.TABELA}".*, "${CDPRODUTOIMAGEMENUM.TABELA}".* FROM "${CDPRODUTOENUM.TABELA}"
+        const select = `SELECT DISTINCT ON ("${CDPRODUTOENUM.TABELA}"."${CDPRODUTOENUM.CDPRODID}") "${CDPRODUTOENUM.TABELA}".*, "${CDPRODUTOIMAGEMENUM.TABELA}".* FROM "${CDPRODUTOENUM.TABELA}"
                         LEFT JOIN "${CDPRODUTOIMAGEMENUM.TABELA}" ON "${CDPRODUTOIMAGEMENUM.CDPRODIMGPRODUTOID}" = "${CDPRODUTOENUM.CDPRODID}"
-                        JOIN "${CDEMPRESAENUM.TABELA}" ON "${CDEMPRESAENUM.CDEMPID}" = "${CDPRODUTOENUM.CDPRODEMPRESAID}" ` + montaWhere(condicoes);
+                        JOIN "${CDEMPRESAENUM.TABELA}" ON "${CDEMPRESAENUM.CDEMPID}" = "${CDPRODUTOENUM.CDPRODEMPRESAID}" ` + montaWhere(condicoes) +
+                        ` ORDER BY "${CDPRODUTOENUM.TABELA}"."${CDPRODUTOENUM.CDPRODID}", "${CDPRODUTOIMAGEMENUM.TABELA}"."${CDPRODUTOIMAGEMENUM.CDPRODIMGORDEM}" ASC, "${CDPRODUTOIMAGEMENUM.TABELA}"."${CDPRODUTOIMAGEMENUM.CDPRODIMGID}" ASC`;
         
         const { rows } = await db.query(select, parametros);
 
@@ -78,7 +80,7 @@ router.post('/', async (req, res) => {
             return res.status(404).json({ error: 'Produto já cadastrado' });
         }
 
-        await db.query(`INSERT INTO "CDPRODUTO" (
+        const insertResult = await db.query(`INSERT INTO "CDPRODUTO" (
                 "CDPRODNOME",
                 "CDPRODDESCRICAO",
                 ${data["cdprodprecoreal"] != null ? '"CDPRODPRECOREAL",' : ""}
@@ -96,9 +98,9 @@ router.post('/', async (req, res) => {
                 ${data["cdprodqtdestoque"]},
                 ${data["cdprodempresaid"]},
                 ${data["cdprodcategoriaid"]}
-            );`);
+            ) RETURNING "CDPRODID";`);
 
-        res.status(204).send(rows);
+        res.status(201).json({ id: insertResult.rows[0]["CDPRODID"] });
     } catch (err) {
         console.error(`[Inserir produto]: ${err.message}\n`);
         registraExcecao(err.stack, data['cdprodempresaid']);
@@ -179,6 +181,19 @@ router.delete('/', async (req, res) => {
             return res.status(404).json({ error: 'Produto não encontrado' });
         }
 
+        // Deletar imagens do produto associadas
+        await db.query(
+            `DELETE FROM "${CDPRODUTOIMAGEMENUM.TABELA}" WHERE "${CDPRODUTOIMAGEMENUM.CDPRODIMGPRODUTOID}" = $1`,
+            [cdprodid]
+        );
+
+        // Deletar itens de carrinho associados
+        await db.query(
+            `DELETE FROM "${LCCARRINHOENUM.TABELA}" WHERE "${LCCARRINHOENUM.LCCARPRODUTOID}" = $1`,
+            [cdprodid]
+        );
+
+        // Deletar o produto
         await db.query(
             `DELETE FROM "${CDPRODUTOENUM.TABELA}" WHERE "${CDPRODUTOENUM.CDPRODID}" = $1`,
             [cdprodid]
