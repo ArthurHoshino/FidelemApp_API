@@ -9,7 +9,7 @@ const router = Router();
 router.post('/', async (req, res) => {
     const { lcauddescricao, lcaudacaoid, lcaudempresaid } = req.body;
 
-    if (lcauddescricao || lcaudacaoid || lcaudempresaid) {
+    if (!lcauddescricao || !lcaudacaoid || !lcaudempresaid) {
         return res.status(400).json({ error: 'Dados obrigatório faltantes' });
     }
 

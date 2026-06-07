@@ -3,7 +3,7 @@ import db from '../db/db.js';
 import CDCARGOENUM from "../core/enums/cdcargo.enum.js";
 import CDEMPRESAENUM from '../core/enums/cdempresa.enum.js';
 import CDSENHAENUM from '../core/enums/cdsenha.enum.js';
-import { montaInsert, montaUpdate, montaWhere, registraExcecao } from '../core/utils.js';
+import { montaInsert, montaUpdate, montaWhere, registraExcecao, registraAuditoria } from '../core/utils.js';
 
 const router = Router();
 
@@ -39,6 +39,16 @@ router.get('/', async (req, res) => {
             JOIN "CDEMPRESA" ON "CDEMPID" = "CDCAREMPRESAID" ` + montaWhere(colunasCondicoes) + condicaoSemCargo;
 
         const { rows } = await db.query(select, parametros);
+
+        if (rows.length > 0 && data['CDSEEMAIL'] && data['CDSESENHA']) {
+            const user = rows[0];
+            await registraAuditoria(
+                `Login efetuado por ${user.CDSENOME} (E-mail: ${user.CDSEEMAIL}, Cargo: ${user.CDCARNOME})`,
+                1, // 1: LOGIN_USUARIO
+                data['empresa']
+            );
+        }
+
         res.json(rows);
     } catch (err) {
         console.error(`[Buscar usuário]: ${err.message}\n`);

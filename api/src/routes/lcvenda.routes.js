@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { montaWhere, montaInsert, montaUpdate, registraExcecao } from "../core/utils.js";
+import { montaWhere, montaInsert, montaUpdate, registraExcecao, registraAuditoria } from "../core/utils.js";
 import LCVENDAENUM from '../core/enums/lcvenda.enum.js';
 import CDSENHAENUM from "../core/enums/cdsenha.enum.js";
 import db from "../db/db.js";
@@ -10,7 +10,7 @@ const router = Router();
 // Rota de finalização de venda e carrinho com transação e validação de estoque
 // <============================>
 router.post('/finalizar', async (req, res) => {
-    const { lcvensenhaid, lccarempresaid } = req.body;
+    const { lcvensenhaid, lccarempresaid, metodopagamento } = req.body;
 
     if (!lcvensenhaid || !lccarempresaid) {
         return res.status(400).json({ error: 'Dados obrigatórios faltantes: lcvensenhaid e lccarempresaid' });
@@ -69,13 +69,25 @@ router.post('/finalizar', async (req, res) => {
 
         // 1. Registrar a venda na LCVENDA (registro único para todos os produtos)
         const infoVenda = JSON.stringify(produtosArray);
-        await client.query(
-            `INSERT INTO "LCVENDA" ("LCVENSENHAID", "LCVENPRODUTOS") VALUES ($1, $2)`,
+        const insertVendaResult = await client.query(
+            `INSERT INTO "LCVENDA" ("LCVENSENHAID", "LCVENPRODUTOS", "LCVENDATA") VALUES ($1, $2, NOW()) RETURNING "LCVENID"`,
             [lcvensenhaid, infoVenda]
         );
+        const vendaId = insertVendaResult.rows[0].LCVENID;
 
-        // 2. Deduzir o estoque para cada produto e limpar carrinho
+        // 2. Deduzir o estoque para cada produto, calcular totais e limpar carrinho
+        let totalReais = 0;
+        let totalPontos = 0;
+
         for (const cartItem of cartResult.rows) {
+            const prodResult = await client.query(
+                `SELECT * FROM "CDPRODUTO" WHERE "CDPRODID" = $1`,
+                [cartItem.LCCARPRODUTOID]
+            );
+            const product = prodResult.rows[0];
+            totalReais += Number(product.CDPRODPRECOREAL || 0) * cartItem.LCCARQUANTIDADE;
+            totalPontos += Number(product.CDPRODPRECOPONTO || 0) * cartItem.LCCARQUANTIDADE;
+
             await client.query(
                 `UPDATE "CDPRODUTO" SET "CDPRODQTDESTOQUE" = "CDPRODQTDESTOQUE" - $1 WHERE "CDPRODID" = $2`,
                 [cartItem.LCCARQUANTIDADE, cartItem.LCCARPRODUTOID]
@@ -90,6 +102,14 @@ router.post('/finalizar', async (req, res) => {
 
         await client.query('COMMIT');
         client.release();
+
+        // 4. Registrar auditoria após commit
+        const pagouComPontos = (metodopagamento === 'pontos');
+        const acaoId = pagouComPontos ? 5 : 6; // 5: RESGATE_RECOMPENSA, 6: REALIZACAO_VENDA
+        const acaoNome = pagouComPontos ? "Resgate de Recompensa" : "Venda";
+        const descLog = `${acaoNome} realizada. Venda Nº ${vendaId} (Método: ${metodopagamento || 'Não Informado'}). Total: R$ ${totalReais.toFixed(2)}, Pontos: ${totalPontos}`;
+        
+        await registraAuditoria(descLog, acaoId, lccarempresaid);
         
         res.status(200).json({ message: 'Venda realizada e carrinho finalizado com sucesso' });
     } catch (err) {
