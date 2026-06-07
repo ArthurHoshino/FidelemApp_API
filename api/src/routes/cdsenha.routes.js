@@ -85,7 +85,12 @@ router.post('/', async (req, res) => {
         }
 
         const campos = Object.keys(CDSENHAENUM).slice(2);
-        const params = campos.map(col => data[col.toLowerCase()] !== undefined ? data[col.toLowerCase()] : null);
+        const params = campos.map(col => {
+            if (col === 'CDSEPONTOS') {
+                return data['cdsepontos'] !== undefined ? data['cdsepontos'] : 0;
+            }
+            return data[col.toLowerCase()] !== undefined ? data[col.toLowerCase()] : null;
+        });
 
         await db.query(montaInsert(CDSENHAENUM), params);
 

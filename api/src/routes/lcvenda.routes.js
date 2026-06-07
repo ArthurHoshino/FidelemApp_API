@@ -94,7 +94,45 @@ router.post('/finalizar', async (req, res) => {
             );
         }
 
-        // 3. Limpar o carrinho
+        // 3. Atualizar carteira de pontos do usuário
+        const userResult = await client.query(
+            `SELECT "${CDSENHAENUM.CDSEPONTOS}" FROM "${CDSENHAENUM.TABELA}" WHERE "${CDSENHAENUM.CDSEID}" = $1 FOR UPDATE`,
+            [lcvensenhaid]
+        );
+
+        if (userResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            client.release();
+            return res.status(404).json({ error: 'Usuário não encontrado' });
+        }
+
+        const currentPoints = userResult.rows[0].CDSEPONTOS || 0;
+
+        if (metodopagamento === 'pontos') {
+            if (currentPoints < totalPontos) {
+                await client.query('ROLLBACK');
+                client.release();
+                return res.status(400).json({ 
+                    error: `Saldo de pontos insuficiente. Você possui ${currentPoints} pontos, mas precisa de ${totalPontos} para esta compra.` 
+                });
+            }
+            // Deduz os pontos do saldo
+            await client.query(
+                `UPDATE "${CDSENHAENUM.TABELA}" SET "${CDSENHAENUM.CDSEPONTOS}" = "${CDSENHAENUM.CDSEPONTOS}" - $1 WHERE "${CDSENHAENUM.CDSEID}" = $2`,
+                [totalPontos, lcvensenhaid]
+            );
+        } else {
+            // Regra simples: R$ 1.00 gasto = 1 ponto ganho (arredondado para baixo)
+            const earnedPoints = Math.floor(totalReais);
+            if (earnedPoints > 0) {
+                await client.query(
+                    `UPDATE "${CDSENHAENUM.TABELA}" SET "${CDSENHAENUM.CDSEPONTOS}" = "${CDSENHAENUM.CDSEPONTOS}" + $1 WHERE "${CDSENHAENUM.CDSEID}" = $2`,
+                    [earnedPoints, lcvensenhaid]
+                );
+            }
+        }
+
+        // 4. Limpar o carrinho
         await client.query(
             `DELETE FROM "LCCARRINHO" WHERE "LCCARSENHAID" = $1 AND "LCCAREMPRESAID" = $2`,
             [lcvensenhaid, lccarempresaid]
