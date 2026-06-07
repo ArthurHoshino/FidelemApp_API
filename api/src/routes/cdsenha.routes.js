@@ -70,6 +70,10 @@ router.post('/', async (req, res) => {
         return res.status(400).json({ error: 'Dados obrigatório faltantes' });
     }
 
+    if (data['cdsecpfcnpj']) {
+        data['cdsecpfcnpj'] = data['cdsecpfcnpj'].toString().replace(/\D/g, '');
+    }
+
     try {
         const { rows } = await db.query(
             `SELECT 1 FROM "${CDCARGOENUM.TABELA}" WHERE "${CDCARGOENUM.CDCARID}" = $1`,
@@ -80,7 +84,10 @@ router.post('/', async (req, res) => {
             return res.status(404).json({ error: 'Cargo não encontrado' });
         }
 
-        await db.query(montaInsert(CDSENHAENUM), Object.values(data).slice(0, -1));
+        const campos = Object.keys(CDSENHAENUM).slice(2);
+        const params = campos.map(col => data[col.toLowerCase()] !== undefined ? data[col.toLowerCase()] : null);
+
+        await db.query(montaInsert(CDSENHAENUM), params);
 
         res.status(204).send();
     } catch (err) {

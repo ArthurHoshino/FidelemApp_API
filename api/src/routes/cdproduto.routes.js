@@ -12,10 +12,13 @@ const router = Router();
 // Rotas GET
 // <============================>
 router.get('/ultimos-visualizados', async (req, res) => {
-    const { cdprodempresaid } = req.query;
+    const { cdprodempresaid, usuarioId } = req.query;
 
     if (!cdprodempresaid) {
         return res.status(400).json({ error: 'Empresa não informada' });
+    }
+    if (!usuarioId) {
+        return res.status(400).json({ error: 'Usuário não informado' });
     }
 
     try {
@@ -27,6 +30,7 @@ router.get('/ultimos-visualizados', async (req, res) => {
               FROM "LCAUDITORIA"
               WHERE "LCAUDACAOID" = 7
                 AND "LCAUDEMPRESAID" = $1
+                AND CAST(SUBSTRING("LCAUDDESCRICAO" FROM '\\(Usuario: (\\d+)\\)') AS INTEGER) = $2
                 AND "LCAUDDATA" >= NOW() - INTERVAL '10 days'
               GROUP BY prod_id
             ),
@@ -47,7 +51,7 @@ router.get('/ultimos-visualizados', async (req, res) => {
             LIMIT 3;
         `;
 
-        const { rows } = await db.query(query, [cdprodempresaid]);
+        const { rows } = await db.query(query, [cdprodempresaid, usuarioId]);
 
         rows.forEach(item => {
             if (item[CDPRODUTOIMAGEMENUM.CDPRODIMGBLOB] !== null && item[CDPRODUTOIMAGEMENUM.CDPRODIMGBLOB] !== undefined) {
