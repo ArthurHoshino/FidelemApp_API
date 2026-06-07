@@ -12,6 +12,7 @@ import cdCategoriaRoutes from './routes/cdcategoria.routes.js';
 import geminiRoutes from './routes/gemini.routes.js';
 import lcCarrinhoRoutes from './routes/lccarrinho.routes.js';
 import lcVendaRoutes from './routes/lcvenda.routes.js';
+import estatisticasRoutes from './routes/estatisticas.routes.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -34,6 +35,7 @@ app.use('/cdcategoria', cdCategoriaRoutes);
 app.use('/lccarrinho', lcCarrinhoRoutes);
 app.use('/lcvenda', lcVendaRoutes);
 app.use('/ia-service', geminiRoutes);
+app.use('/estatisticas', estatisticasRoutes);
 
 app.listen(port, () => {
     console.log(`Servidor rodando em http://localhost:${port}\n`);

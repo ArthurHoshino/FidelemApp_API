@@ -94,6 +94,12 @@ router.post('/', async (req, res) => {
 
         await db.query(montaInsert(CDSENHAENUM), params);
 
+        await registraAuditoria(
+            `Novo usuário cadastrado: ${data['cdsenome']} (E-mail: ${data['cdseemail']})`,
+            14, // CADASTRO_USUARIO
+            data['empresa']
+        );
+
         res.status(204).send();
     } catch (err) {
         console.error(`[Inserir usuário]: ${err.message}\n`);
@@ -180,6 +186,12 @@ router.delete('/', async (req, res) => {
         await db.query(
             `DELETE FROM "${CDSENHAENUM.TABELA}" WHERE "${CDSENHAENUM.CDSEID}" = $1`,
             [cdseid]
+        );
+
+        await registraAuditoria(
+            `Usuário removido (ID: ${cdseid})`,
+            15, // REMOCAO_USUARIO
+            empresa
         );
 
         res.status(204).send();
