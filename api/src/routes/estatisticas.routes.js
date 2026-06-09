@@ -38,8 +38,8 @@ router.get('/', async (req, res) => {
 
         const { rows: [kpiPontos] } = await db.query(
             `SELECT COALESCE(SUM(
-                CASE WHEN "LCAUDDESCRICAO" ~ 'Pontos: \\d+'
-                     THEN CAST(SUBSTRING("LCAUDDESCRICAO" FROM 'Pontos: (\\d+)') AS INTEGER)
+                CASE WHEN "LCAUDDESCRICAO" ~ 'Total: R\\$ [0-9.]+' AND NOT ("LCAUDDESCRICAO" ~ 'Método: pontos')
+                     THEN CAST(FLOOR(CAST(SUBSTRING("LCAUDDESCRICAO" FROM 'Total: R\\$ ([0-9.]+)') AS NUMERIC)) AS INTEGER)
                      ELSE 0
                 END
              ), 0) as "pontosDistribuidos"
@@ -108,14 +108,19 @@ router.get('/', async (req, res) => {
         // Pontos Resumo
         const { rows: pontosRows } = await db.query(
             `SELECT "LCAUDACAOID" as tipo, COALESCE(SUM(
-                CASE WHEN "LCAUDDESCRICAO" ~ 'Pontos: \\d+'
-                     THEN CAST(SUBSTRING("LCAUDDESCRICAO" FROM 'Pontos: (\\d+)') AS INTEGER)
-                     ELSE 0
+                CASE 
+                    -- Pontos Acumulados (tipo 6): vendas não realizadas pelo método de pagamento de ponto
+                    WHEN "LCAUDACAOID" = 6 AND "LCAUDDESCRICAO" ~ 'Total: R\\$ [0-9.]+' AND NOT ("LCAUDDESCRICAO" ~ 'Método: pontos') THEN
+                        CAST(FLOOR(CAST(SUBSTRING("LCAUDDESCRICAO" FROM 'Total: R\\$ ([0-9.]+)') AS NUMERIC)) AS INTEGER)
+                    -- Pontos Resgatados (tipo 5): valor da compra quando o método de pagamento for por pontos
+                    WHEN "LCAUDACAOID" = 5 AND "LCAUDDESCRICAO" ~ 'Método: pontos' AND "LCAUDDESCRICAO" ~ 'Pontos: \\d+' THEN
+                        CAST(SUBSTRING("LCAUDDESCRICAO" FROM 'Pontos: (\\d+)') AS INTEGER)
+                    ELSE 0
                 END
              ), 0) as total
-             FROM "LCAUDITORIA"
-             WHERE "LCAUDEMPRESAID" = $1 AND "LCAUDACAOID" IN (5, 6) AND "LCAUDDATA" >= NOW() - INTERVAL '${intervalo}'
-             GROUP BY "LCAUDACAOID"`,
+              FROM "LCAUDITORIA"
+              WHERE "LCAUDEMPRESAID" = $1 AND "LCAUDACAOID" IN (5, 6) AND "LCAUDDATA" >= NOW() - INTERVAL '${intervalo}'
+              GROUP BY "LCAUDACAOID"`,
             [empresaid]
         );
 
